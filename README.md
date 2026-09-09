@@ -18,15 +18,15 @@ Image thresholding separates pixels into different classes using their gray-leve
 
 For binary thresholding, a threshold \(k\) divides the pixels into two classes:
 
-\[
+$$
 C_0 = [0,1,\ldots,k]
-\]
+$$
 
 and
 
-\[
-C_1 = [k+1,\ldots,L-1].
-\]
+$$
+C_1 = [k+1,\ldots,L-1]
+$$
 
 A simple approach might attempt to find a valley between two peaks in the gray-level histogram.
 
@@ -47,60 +47,60 @@ The optimal threshold is the threshold that maximizes this class separability.
 
 Let
 
-\[
+$$
 p_i = \frac{n_i}{N}
-\]
+$$
 
-represent the normalized probability of gray level \(i\), where:
+represent the normalized probability of gray level $i$, where:
 
-- \(n_i\) is the number of pixels at gray level \(i\),
-- \(N\) is the total number of pixels.
+- $n_i$ is the number of pixels at gray level $i$,
+- $N$ is the total number of pixels.
 
-For a candidate threshold \(k\), the cumulative probability is
+For a candidate threshold $k$, the cumulative probability is
 
-\[
-\omega(k)=\sum_{i=0}^{k}p_i.
-\]
+$$
+\omega(k)=\sum_{i=0}^{k}p_i
+$$
 
-This is the probability of class \(C_0\).
+This is the probability of class $C_0$.
 
-The probability of class \(C_1\) is
+The probability of class $C_1$ is
 
-\[
-1-\omega(k).
-\]
+$$
+1-\omega(k)
+$$
 
 The first-order cumulative moment is
 
-\[
-\mu(k)=\sum_{i=0}^{k} i p_i.
-\]
+$$
+\mu(k)=\sum_{i=0}^{k} i p_i
+$$
 
 The total image mean is
 
-\[
-\mu_T=\sum_{i=0}^{L-1} i p_i.
-\]
+$$
+\mu_T=\sum_{i=0}^{L-1} i p_i
+$$
 
 Otsu showed that the between-class variance can be calculated efficiently as
 
-\[
+$$
 \sigma_B^2(k)
 =
 \frac{
 [\mu_T\omega(k)-\mu(k)]^2
 }{
 \omega(k)[1-\omega(k)]
-}.
-\]
+}
+$$
 
 The optimal threshold is therefore
 
-\[
+$$
 k^*
 =
-\arg\max_k \sigma_B^2(k).
-\]
+\arg\max_k \sigma_B^2(k)
+$$
 
 The implementation tests all valid thresholds and returns the value that maximizes the between-class variance.
 
@@ -110,29 +110,29 @@ The implementation tests all valid thresholds and returns the value that maximiz
 
 Otsu defines the relationship
 
-\[
+$$
 \sigma_T^2
 =
-\sigma_W^2+\sigma_B^2,
-\]
+\sigma_W^2+\sigma_B^2
+$$
 
 where:
 
-- \(\sigma_T^2\) is total gray-level variance,
-- \(\sigma_W^2\) is within-class variance,
-- \(\sigma_B^2\) is between-class variance.
+- $\sigma_T^2$ is total gray-level variance,
+- $\sigma_W^2$ is within-class variance,
+- $\sigma_B^2$ is between-class variance.
 
 Because the total variance is constant for a given image,
 
-\[
+$$
 \min \sigma_W^2
-\]
+$$
 
 is equivalent to
 
-\[
-\max \sigma_B^2.
-\]
+$$
+\max \sigma_B^2
+$$
 
 Therefore, maximizing between-class variance gives the threshold that produces the strongest separation between the two gray-level classes.
 
@@ -142,34 +142,34 @@ Therefore, maximizing between-class variance gives the threshold that produces t
 
 Otsu also defines the separability measure
 
-\[
+$$
 \eta =
-\frac{\sigma_B^2}{\sigma_T^2}.
-\]
+\frac{\sigma_B^2}{\sigma_T^2}
+$$
 
 At the optimal threshold,
 
-\[
-\eta^*=\eta(k^*).
-\]
+$$
+\eta^*=\eta(k^*)
+$$
 
-The value satisfies approximately
+The value satisfies
 
-\[
-0 \leq \eta^* \leq 1.
-\]
+$$
+0 \leq \eta^* \leq 1
+$$
 
 A larger value indicates stronger separation between the two resulting gray-level classes.
 
 The implementation reports:
 
-- optimal threshold \(k^*\),
-- \(\omega_0\),
-- \(\omega_1\),
-- \(\mu_0\),
-- \(\mu_1\),
-- \(\mu_T\),
-- \(\eta^*\).
+- optimal threshold $k^*$,
+- $\omega_0$,
+- $\omega_1$,
+- $\mu_0$,
+- $\mu_1$,
+- $\mu_T$,
+- $\eta^*$.
 
 ---
 
