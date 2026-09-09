@@ -9,19 +9,11 @@ from otsu import otsu_threshold, apply_threshold
 
 
 def load_grayscale_image(path):
-    """
-    Load an image and convert it to 8-bit grayscale.
-    """
     image = Image.open(path).convert("L")
     return np.array(image)
 
 
-def run_experiment(image_path, output_dir="results"):
-    """
-    Run the custom Otsu implementation on one image and
-    save visualizations and comparison results.
-    """
-
+def run_experiment(image_path, output_dir):
     os.makedirs(output_dir, exist_ok=True)
 
     image = load_grayscale_image(image_path)
@@ -30,22 +22,22 @@ def run_experiment(image_path, output_dir="results"):
     threshold, sigma_b_squared, hist = otsu_threshold(image)
     binary = apply_threshold(image, threshold)
 
-    # Library implementation for verification only
+    # Library result only for verification
     library_threshold = int(threshold_otsu(image))
 
-    print(f"Image: {image_path}")
+    print(f"\nImage: {image_path}")
     print(f"Our Otsu threshold: {threshold}")
     print(f"scikit-image threshold: {library_threshold}")
 
-    # Save binary result
+    # Save binary image
     Image.fromarray(binary).save(
         os.path.join(output_dir, "binary.png")
     )
 
-    # Plot original image
+    # Original
     plt.figure()
     plt.imshow(image, cmap="gray")
-    plt.title("Original Grayscale Image")
+    plt.title("Original Image")
     plt.axis("off")
     plt.tight_layout()
     plt.savefig(
@@ -54,13 +46,13 @@ def run_experiment(image_path, output_dir="results"):
     )
     plt.close()
 
-    # Plot histogram
+    # Histogram
     plt.figure()
     plt.plot(np.arange(256), hist)
     plt.axvline(
         threshold,
         linestyle="--",
-        label=f"Otsu threshold = {threshold}"
+        label=f"Threshold = {threshold}"
     )
     plt.xlabel("Gray Level")
     plt.ylabel("Number of Pixels")
@@ -73,7 +65,7 @@ def run_experiment(image_path, output_dir="results"):
     )
     plt.close()
 
-    # Plot between-class variance
+    # Otsu criterion
     plt.figure()
     plt.plot(np.arange(256), sigma_b_squared)
     plt.axvline(
@@ -83,19 +75,19 @@ def run_experiment(image_path, output_dir="results"):
     )
     plt.xlabel("Threshold k")
     plt.ylabel("Between-Class Variance")
-    plt.title("Otsu Criterion")
+    plt.title("Otsu Between-Class Variance")
     plt.legend()
     plt.tight_layout()
     plt.savefig(
-        os.path.join(output_dir, "otsu_criterion.png"),
+        os.path.join(output_dir, "criterion.png"),
         dpi=300
     )
     plt.close()
 
-    # Plot binary result
+    # Thresholded result
     plt.figure()
     plt.imshow(binary, cmap="gray")
-    plt.title(f"Otsu Thresholded Image (T = {threshold})")
+    plt.title(f"Thresholded Image (T = {threshold})")
     plt.axis("off")
     plt.tight_layout()
     plt.savefig(
@@ -104,6 +96,27 @@ def run_experiment(image_path, output_dir="results"):
     )
     plt.close()
 
+    return threshold, library_threshold
+
 
 if __name__ == "__main__":
-    run_experiment("images/test_image.png")
+
+    experiments = {
+        "fig1_a_character_new_ribbon":
+            "images/fig1_a_character_new_ribbon.png",
+
+        "fig1_e_character_old_ribbon":
+            "images/fig1_e_character_old_ribbon.png",
+
+        "fig2_a_texture":
+            "images/fig2_a_texture.png",
+
+        "fig2_e_texture":
+            "images/fig2_e_texture.png",
+    }
+
+    for name, image_path in experiments.items():
+        run_experiment(
+            image_path,
+            output_dir=os.path.join("results", name)
+        )
