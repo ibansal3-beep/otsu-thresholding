@@ -19,7 +19,7 @@ def run_experiment(image_path, output_dir):
     image = load_grayscale_image(image_path)
 
     # Our implementation
-    threshold, sigma_b_squared, hist = otsu_threshold(image)
+    threshold, sigma_b_squared, hist, stats = otsu_threshold(image)
     binary = apply_threshold(image, threshold)
 
     # Library result only for verification
@@ -28,6 +28,12 @@ def run_experiment(image_path, output_dir):
     print(f"\nImage: {image_path}")
     print(f"Our Otsu threshold: {threshold}")
     print(f"scikit-image threshold: {library_threshold}")
+    print(f"omega0: {stats['omega0']:.3f}")
+    print(f"omega1: {stats['omega1']:.3f}")
+    print(f"mu0: {stats['mu0']:.3f}")
+    print(f"mu1: {stats['mu1']:.3f}")
+    print(f"muT: {stats['muT']:.3f}")
+    print(f"eta*: {stats['eta']:.3f}")
 
     # Save binary image
     Image.fromarray(binary).save(
