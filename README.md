@@ -143,7 +143,8 @@ Therefore, maximizing between-class variance gives the threshold that produces t
 Otsu also defines the separability measure
 
 $$
-\eta =
+\eta
+=
 \frac{\sigma_B^2}{\sigma_T^2}
 $$
 
@@ -212,12 +213,12 @@ The method is implemented directly from Otsu's cumulative-moment formulation.
 The program:
 
 1. Computes the 256-bin gray-level histogram.
-2. Normalizes the histogram to obtain \(p_i\).
-3. Computes the cumulative probability \(\omega(k)\).
-4. Computes the cumulative first moment \(\mu(k)\).
-5. Computes the total mean \(\mu_T\).
-6. Evaluates \(\sigma_B^2(k)\) for all valid thresholds.
-7. Selects the threshold that maximizes \(\sigma_B^2(k)\).
+2. Normalizes the histogram to obtain $p_i$.
+3. Computes the cumulative probability $\omega(k)$.
+4. Computes the cumulative first moment $\mu(k)$.
+5. Computes the total mean $\mu_T$.
+6. Evaluates $\sigma_B^2(k)$ for all valid thresholds.
+7. Selects the threshold that maximizes $\sigma_B^2(k)$.
 8. Computes the class statistics and separability measure.
 9. Applies the selected threshold to produce a binary image.
 
