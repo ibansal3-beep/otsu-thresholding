@@ -1,6 +1,6 @@
-# Otsu Thresholding from Scratch
+# Otsu Thresholding 
 
-A from-scratch implementation of Nobuyuki Otsu's classic 1979 automatic threshold selection method.
+An implementation of Nobuyuki Otsu's classic 1979 automatic threshold selection method.
 
 This repository is based primarily on:
 
