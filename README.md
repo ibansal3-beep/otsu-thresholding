@@ -1,14 +1,14 @@
-# Otsu Thresholding 
+# Otsu Thresholding from Scratch
 
-An implementation of Nobuyuki Otsu's classic 1979 automatic threshold selection method.
+A from-scratch implementation of Nobuyuki Otsu's classic 1979 automatic threshold selection method.
 
-This repository reproduces the main idea from:
+This repository is based primarily on:
 
 > N. Otsu, "A Threshold Selection Method from Gray-Level Histograms,"  
 > *IEEE Transactions on Systems, Man, and Cybernetics*,  
 > vol. SMC-9, no. 1, pp. 62-66, January 1979.
 
-The goal of this project is to understand and implement Otsu's method directly from the mathematical formulation in the original paper rather than relying on an existing implementation.
+The goal of this project is to understand and implement Otsu's method directly from the mathematical ideas in the original paper rather than relying on an existing thresholding function.
 
 ---
 
@@ -16,161 +16,88 @@ The goal of this project is to understand and implement Otsu's method directly f
 
 Image thresholding separates pixels into different classes using their gray-level intensities.
 
-For binary thresholding, a threshold \(k\) divides the pixels into two classes:
+For binary thresholding, a threshold `k` divides the gray levels into two classes:
 
-$$
-C_0 = [0,1,\ldots,k]
-$$
+- `C0`: gray levels from the minimum value up to `k`
+- `C1`: gray levels above `k`
 
-and
-
-$$
-C_1 = [k+1,\ldots,L-1]
-$$
-
-A simple approach might attempt to find a valley between two peaks in the gray-level histogram.
+A simple approach might attempt to locate a valley between two peaks in the gray-level histogram.
 
 However, Otsu explains that this can become unreliable when:
 
 - the histogram valley is broad or flat,
 - the image contains noise,
-- the two histogram peaks have very different heights,
+- the two peaks have very different heights,
 - or a clear valley does not exist.
 
-Instead of searching for a local histogram valley, Otsu defines a global measure of how well the two resulting classes are separated.
+Instead of searching for a local valley, Otsu evaluates how well the two resulting classes are separated.
 
-The optimal threshold is the threshold that maximizes this class separability.
+The optimal threshold is the threshold that gives the strongest separation between the two classes.
 
 ---
 
-## 2. Otsu's Method
+## 2. Core Idea of Otsu's Method
 
-Let
+The image histogram is first normalized so that each gray level has a probability based on how many pixels have that intensity.
 
-$$
-p_i = \frac{n_i}{N}
-$$
+For every possible threshold `k`, the algorithm computes:
 
-represent the normalized probability of gray level $i$, where:
+- the probability of class `C0`,
+- the probability of class `C1`,
+- the mean intensity of class `C0`,
+- the mean intensity of class `C1`,
+- the total image mean,
+- the between-class variance.
 
-- $n_i$ is the number of pixels at gray level $i$,
-- $N$ is the total number of pixels.
+The best threshold is the one that maximizes the between-class variance.
 
-For a candidate threshold $k$, the cumulative probability is
+In simple terms:
 
-$$
-\omega(k)=\sum_{i=0}^{k}p_i
-$$
-
-This is the probability of class $C_0$.
-
-The probability of class $C_1$ is
-
-$$
-1-\omega(k)
-$$
-
-The first-order cumulative moment is
-
-$$
-\mu(k)=\sum_{i=0}^{k} i p_i
-$$
-
-The total image mean is
-
-$$
-\mu_T=\sum_{i=0}^{L-1} i p_i
-$$
-
-Otsu showed that the between-class variance can be calculated efficiently as
-
-$$
-\sigma_B^2(k)
-=
-\frac{
-[\mu_T\omega(k)-\mu(k)]^2
-}{
-\omega(k)[1-\omega(k)]
-}
-$$
-
-The optimal threshold is therefore
-
-$$
-k^*
-=
-\arg\max_k \sigma_B^2(k)
-$$
-
-The implementation tests all valid thresholds and returns the value that maximizes the between-class variance.
+> Otsu chooses the threshold that makes the two resulting gray-level groups as different from each other as possible.
 
 ---
 
 ## 3. Why Between-Class Variance?
 
-Otsu defines the relationship
+Otsu relates three quantities:
 
-$$
-\sigma_T^2
-=
-\sigma_W^2+\sigma_B^2
-$$
+- total variance,
+- within-class variance,
+- between-class variance.
 
-where:
+For a fixed image, the total variance does not change.
 
-- $\sigma_T^2$ is total gray-level variance,
-- $\sigma_W^2$ is within-class variance,
-- $\sigma_B^2$ is between-class variance.
+This means that minimizing within-class variance is equivalent to maximizing between-class variance.
 
-Because the total variance is constant for a given image,
+Therefore, the best threshold is the one that creates:
 
-$$
-\min \sigma_W^2
-$$
+- compact classes internally,
+- strong separation between the classes.
 
-is equivalent to
-
-$$
-\max \sigma_B^2
-$$
-
-Therefore, maximizing between-class variance gives the threshold that produces the strongest separation between the two gray-level classes.
+This is the central optimization criterion used in the implementation.
 
 ---
 
 ## 4. Separability Measure
 
-Otsu also defines the separability measure
+Otsu also defines a separability measure, commonly written as `eta`.
 
-$$
-\eta
-=
-\frac{\sigma_B^2}{\sigma_T^2}
-$$
+This value compares the between-class variance with the total variance.
 
-At the optimal threshold,
+Its value lies between 0 and 1.
 
-$$
-\eta^*=\eta(k^*)
-$$
+Interpretation:
 
-The value satisfies
-
-$$
-0 \leq \eta^* \leq 1
-$$
-
-A larger value indicates stronger separation between the two resulting gray-level classes.
+- values near 0 indicate poor class separation,
+- values near 1 indicate strong class separation.
 
 The implementation reports:
 
-- optimal threshold $k^*$,
-- $\omega_0$,
-- $\omega_1$,
-- $\mu_0$,
-- $\mu_1$,
-- $\mu_T$,
-- $\eta^*$.
+- optimal threshold,
+- class probabilities,
+- class means,
+- total image mean,
+- separability value.
 
 ---
 
@@ -202,27 +129,27 @@ otsu-thresholding/
 
 ## 6. Implementation
 
-The core implementation is contained in:
+The main implementation is contained in:
 
 ```text
 otsu.py
 ```
 
-The method is implemented directly from Otsu's cumulative-moment formulation.
+The implementation follows the cumulative-moment formulation described in Otsu's paper.
 
 The program:
 
-1. Computes the 256-bin gray-level histogram.
-2. Normalizes the histogram to obtain $p_i$.
-3. Computes the cumulative probability $\omega(k)$.
-4. Computes the cumulative first moment $\mu(k)$.
-5. Computes the total mean $\mu_T$.
-6. Evaluates $\sigma_B^2(k)$ for all valid thresholds.
-7. Selects the threshold that maximizes $\sigma_B^2(k)$.
-8. Computes the class statistics and separability measure.
-9. Applies the selected threshold to produce a binary image.
+1. Computes a 256-bin grayscale histogram.
+2. Normalizes the histogram.
+3. Computes cumulative class probabilities.
+4. Computes cumulative first-order moments.
+5. Computes the total image mean.
+6. Evaluates between-class variance for every valid threshold.
+7. Selects the threshold with the maximum between-class variance.
+8. Computes class statistics and separability.
+9. Produces a binary thresholded image.
 
-The main implementation does **not** use `skimage.filters.threshold_otsu()` to determine the threshold.
+The main implementation does not use `skimage.filters.threshold_otsu()` to determine the threshold.
 
 ---
 
@@ -234,44 +161,44 @@ Four images based on examples from Otsu's original paper were used.
 
 Character `A` produced using a new typewriter ribbon.
 
-This represents a relatively clean foreground/background thresholding problem.
+This is a relatively clean foreground/background example.
 
 ### Figure 1(e)
 
 Character `A` produced using an older ribbon.
 
-This image provides a noisier version of the first experiment.
+This is a noisier version of the first example.
 
 ### Figure 2(a)
 
-Texture example with a difficult broad/flat histogram valley.
+Texture example with a broad and difficult histogram valley.
 
 ### Figure 2(e)
 
-Texture example with a more difficult histogram distribution that is closer to unimodal.
+Texture example with a more difficult histogram shape that is closer to unimodal.
 
-These examples were selected because the original paper uses them to demonstrate that the method does not depend on identifying a sharp local valley in the histogram.
+These examples were chosen because the original paper uses them to demonstrate that Otsu's method does not depend on finding a sharp local valley in the histogram.
 
 ---
 
 ## 8. Experimental Results
 
-The following thresholds were obtained using the implementation in this repository.
+The following results were obtained from the implementation in this repository.
 
-| Image | Our Otsu Threshold | scikit-image Threshold | Separability \(\eta^*\) |
+| Image | Our Otsu Threshold | scikit-image Threshold | Separability |
 |---|---:|---:|---:|
 | Fig. 1(a) new ribbon | 157 | 157 | 0.791 |
 | Fig. 1(e) old ribbon | 156 | 156 | 0.776 |
 | Fig. 2(a) texture | 153 | 153 | 0.857 |
 | Fig. 2(e) texture | 142 | 142 | 0.831 |
 
-The independently implemented method produced exactly the same threshold as `scikit-image` for all four experiments.
+The independently implemented method produced exactly the same threshold as `scikit-image` for all four images.
 
 ---
 
 ## 9. Detailed Statistics
 
-### Figure 1(a) — New Ribbon
+### Figure 1(a) - New Ribbon
 
 ```text
 Threshold: 157
@@ -283,7 +210,7 @@ muT: 183.521
 eta*: 0.791
 ```
 
-### Figure 1(e) — Old Ribbon
+### Figure 1(e) - Old Ribbon
 
 ```text
 Threshold: 156
@@ -295,7 +222,7 @@ muT: 170.366
 eta*: 0.776
 ```
 
-### Figure 2(a) — Texture
+### Figure 2(a) - Texture
 
 ```text
 Threshold: 153
@@ -307,7 +234,7 @@ muT: 149.174
 eta*: 0.857
 ```
 
-### Figure 2(e) — Texture
+### Figure 2(e) - Texture
 
 ```text
 Threshold: 142
@@ -332,30 +259,32 @@ The original paper reports approximately the following thresholds:
 | Fig. 2(a) | 33 |
 | Fig. 2(e) | 32 |
 
-These values should **not** be directly compared numerically with the thresholds obtained in this repository.
+These threshold values should not be directly compared with the values obtained in this repository.
 
-The original paper states that the experimental images were represented using different numbers of gray levels. For example:
+The original paper states that:
 
-- Figure 1 used 16 gray levels.
+- Figure 1 used 16 gray levels,
 - Figure 2 used 64 gray levels.
 
-The images used in this repository were obtained from reproductions of the figures in the published paper and converted to standard 8-bit grayscale images with values in the range
+The images used in this repository were obtained from reproduced figures in the published paper and then converted to standard 8-bit grayscale images.
 
-\[
-0 \ldots 255.
-\]
+As a result, the intensity values were altered by:
 
-Printing, scanning, PDF reproduction, cropping, and grayscale conversion alter the original histogram.
+- printing,
+- scanning,
+- PDF reproduction,
+- cropping,
+- grayscale conversion.
 
 Therefore, reproducing the exact threshold values reported in 1979 is not expected.
 
-The important validation is that the independently implemented algorithm produces exactly the same thresholds as the standard `scikit-image` implementation when both operate on the same input images.
+The important validation is that the custom implementation and `scikit-image` produce the same threshold when both are applied to the same input image.
 
 ---
 
 ## 11. Generated Results
 
-For each image, the experiment script generates:
+For each image, the experiment script creates:
 
 ```text
 original.png
@@ -367,23 +296,17 @@ thresholded.png
 
 ### Histogram
 
-`histogram.png` displays the gray-level histogram together with the selected threshold.
+The histogram plot shows the gray-level distribution and the selected threshold.
 
 ### Otsu Criterion
 
-`criterion.png` displays the between-class variance
+The criterion plot shows the between-class variance for all candidate thresholds.
 
-\[
-\sigma_B^2(k)
-\]
-
-for candidate thresholds.
-
-The selected threshold corresponds to the maximum of this criterion.
+The selected threshold corresponds to the maximum of this curve.
 
 ### Thresholded Image
 
-`thresholded.png` displays the final binary segmentation produced using the selected threshold.
+The thresholded image shows the final binary segmentation.
 
 ---
 
@@ -396,19 +319,19 @@ git clone https://github.com/ibansal3-beep/otsu-thresholding.git
 cd otsu-thresholding
 ```
 
-Install the dependencies:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-Run all experiments:
+Run the experiments:
 
 ```bash
 python experiments.py
 ```
 
-The results will be saved inside:
+The generated outputs will be saved in:
 
 ```text
 results/
@@ -427,13 +350,13 @@ pillow
 scikit-image
 ```
 
-`NumPy` is used for histogram calculations and numerical operations.
+`NumPy` is used for numerical operations and histogram calculations.
 
-`Pillow` is used for image loading and saving.
+`Pillow` is used for loading and saving images.
 
-`Matplotlib` is used for visualization.
+`Matplotlib` is used for plots and visualizations.
 
-`scikit-image` is used only as an independent reference implementation for verification.
+`scikit-image` is used only for independent verification.
 
 ---
 
@@ -441,57 +364,53 @@ scikit-image
 
 ### Otsu's Original Paper
 
-The mathematical implementation in this repository was derived primarily from Nobuyuki Otsu's 1979 paper.
+The implementation was derived primarily from the original 1979 paper.
 
-Specifically, the following ideas were taken from the original formulation:
+The following ideas were taken from the paper:
 
-- normalized gray-level histogram \(p_i\),
-- division of pixels into classes \(C_0\) and \(C_1\),
-- cumulative class probability \(\omega(k)\),
-- cumulative first moment \(\mu(k)\),
-- total image mean \(\mu_T\),
-- within-class, between-class, and total variance,
-- the relationship
-
-\[
-\sigma_T^2=\sigma_W^2+\sigma_B^2,
-\]
-
+- normalized gray-level histogram,
+- division into two classes,
+- cumulative class probabilities,
+- cumulative first-order moments,
+- class means,
+- total image mean,
+- within-class variance,
+- between-class variance,
+- total variance,
 - maximization of between-class variance,
-- the separability measure \(\eta\),
-- and the interpretation of the optimal threshold as the threshold that maximizes class separability.
+- separability measure.
 
-The code was written independently from these equations rather than copied from an existing Otsu implementation.
+The code was written independently based on these ideas rather than copied from an existing implementation.
 
-### scikit-image Documentation and Implementation
+### scikit-image
 
-The `scikit-image` documentation and its `threshold_otsu` implementation were studied as a modern reference for the practical use of Otsu thresholding.
+The `scikit-image` documentation and `threshold_otsu` function were studied as a modern implementation reference.
 
-Its ideas were used in this project only to:
+They were used to:
 
-- understand common modern usage of global Otsu thresholding,
-- verify the independently implemented algorithm,
-- compare the threshold produced by this implementation with a widely used library implementation.
+- understand common practical usage of Otsu thresholding,
+- verify the correctness of the custom implementation,
+- compare the thresholds produced by both methods.
 
-`skimage.filters.threshold_otsu()` is **not** used to compute the threshold returned by the custom implementation.
+`skimage.filters.threshold_otsu()` is not used to compute the threshold returned by the custom implementation.
 
-It is called separately in `experiments.py` only for validation.
+It is used only as a separate verification step inside `experiments.py`.
 
 ---
 
 ## 15. Main Observation
 
-For all four experimental images,
+For all four experiments:
 
 ```text
 Custom implementation threshold = scikit-image threshold
 ```
 
-This provides strong evidence that the implementation correctly reproduces the binary Otsu threshold-selection algorithm.
+This strongly supports that the implementation correctly reproduces the classic binary Otsu threshold-selection method.
 
-The experiments also demonstrate the main idea of the original paper:
+The experiments also support the central idea from the original paper:
 
-> A useful threshold can be selected by globally maximizing class separability instead of relying on a visible local valley in the gray-level histogram.
+> A useful threshold can be selected by maximizing global class separability rather than relying on a visible histogram valley.
 
 ---
 
@@ -501,13 +420,13 @@ Otsu thresholding is a global intensity-based method.
 
 Its performance can be limited when:
 
-- foreground and background gray levels overlap strongly,
-- illumination varies significantly across the image,
+- foreground and background intensities overlap strongly,
+- illumination varies across the image,
 - spatial information is important,
-- multiple meaningful classes must be separated,
-- the histogram provides weak class separation.
+- multiple meaningful classes are present,
+- class separation in the histogram is weak.
 
-The original paper also discusses extension to multiple thresholds. However, the present implementation focuses on the classic binary two-class formulation.
+The original paper also discusses multithresholding, but this repository focuses on the classic two-class version.
 
 ---
 
@@ -524,7 +443,7 @@ vol. SMC-9, no. 1, pp. 62-66, January 1979.
 
 scikit-image developers,  
 `skimage.filters.threshold_otsu`,  
-*scikit-image Image Processing in Python documentation*.  
+*scikit-image Documentation*.  
 Accessed September 2026.
 
 ### Thresholding Guide
